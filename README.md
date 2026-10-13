@@ -81,6 +81,7 @@ DOSW_ParcialT2_JuanAlvarez/
 ├── .github/workflows/ci-cd.yml
 ├── Dockerfile
 ├── .dockerignore
+├── mvnw / mvnw.cmd / .mvn/
 ├── pom.xml
 ├── .gitignore
 └── README.md
@@ -122,6 +123,7 @@ DOSW_ParcialT2_JuanAlvarez/
 | JUnit 5 + Mockito | (Spring Boot) | Pruebas unitarias. |
 | Jacoco | 0.8.15 | Reporte de cobertura de pruebas. |
 | SonarQube (sonar-maven-plugin) | 5.8.0.7211 | Análisis estático de calidad del código. |
+| Maven (Wrapper) | 3.9.11 | Construcción del proyecto sin instalar Maven (`mvnw`). |
 | Docker | — | Contenerización del servicio. |
 | GitHub Actions | — | Pipeline de CI/CD. |
 | Azure App Service | — | Despliegue del contenedor. |
@@ -139,6 +141,107 @@ Ninguna credencial se sube al repositorio: `.env` y `*.p12` están en el `.gitig
 
 ## 7. Cómo ejecutar
 
+### 7.1 Preparar el entorno en un PC nuevo
+
+**Herramientas necesarias**
+
+| Herramienta | Versión | Verificar con |
+|---|---|---|
+| Git | cualquiera reciente | `git --version` |
+| JDK | **21** (Temurin recomendado) | `java -version` |
+| Docker Desktop | cualquiera reciente | `docker --version` |
+| IntelliJ IDEA (opcional) | cualquiera reciente | — |
+| GitHub CLI (opcional) | cualquiera reciente | `gh --version` |
+
+> ⚠️ **Usar JDK 21.** Con versiones más nuevas del JDK (por ejemplo 27) Lombok falla al compilar con
+> `ExceptionInInitializerError: com.sun.tools.javac.tree.EndPosTable`. Si hay varios JDK instalados, `JAVA_HOME`
+> debe apuntar al 21.
+
+No hace falta instalar Maven: el proyecto incluye el Maven Wrapper (`mvnw` / `mvnw.cmd`), que descarga Maven 3.9.11 la primera vez.
+
+**1. Clonar el repositorio y configurar la identidad de Git**
+
+```bash
+git clone https://github.com/JUANNICOLASA/DOSW_ParcialT2_JuanAlvarez.git
+cd DOSW_ParcialT2_JuanAlvarez
+git checkout develop
+git config user.name "JUANNICOLASA"
+git config user.email "juan.amunoz@mail.escuelaing.edu.co"
+```
+
+**2. Definir el secret JWT para desarrollo local**
+
+En local se puede usar cualquier valor Base64 de mínimo 44 caracteres (no tiene que ser el de Azure).
+
+macOS / Linux:
+
+```bash
+export JWT_SECRET=$(openssl rand -base64 48)
+```
+
+Windows (PowerShell):
+
+```powershell
+$bytes = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+```
+
+La variable solo dura mientras la terminal esté abierta.
+
+**3. Levantar MongoDB local**
+
+Con Docker Desktop abierto:
+
+```bash
+docker run -d -p 27017:27017 --name mongo-parcial mongo:7
+```
+
+Si el contenedor ya existe (por ejemplo, después de reiniciar el PC): `docker start mongo-parcial`.
+
+**4. Compilar y ejecutar las pruebas**
+
+```bash
+./mvnw clean verify          # macOS / Linux
+.\mvnw.cmd clean verify      # Windows
+```
+
+Debe terminar en `BUILD SUCCESS`. El reporte de Jacoco queda en `target/site/jacoco/index.html`.
+
+**5. Ejecutar el servicio**
+
+```bash
+./mvnw spring-boot:run       # macOS / Linux
+.\mvnw.cmd spring-boot:run   # Windows
+```
+
+Verificar en el navegador:
+
+- http://localhost:8080/api/v1/health → `{"status":"UP","service":"DOSW-ParcialT2"}`
+- http://localhost:8080/swagger-ui/index.html → carga Swagger
+
+**6. Abrir el proyecto en IntelliJ IDEA**
+
+1. *File → Open* y seleccionar el `pom.xml` → *Open as Project*.
+2. *File → Project Structure → Project → SDK*: seleccionar **21** (si no aparece, *Add SDK → Download JDK → Temurin 21*).
+3. *Settings → Build, Execution, Deployment → Compiler → Annotation Processors*: marcar **Enable annotation processing** (Lombok y MapStruct).
+4. Instalar el plugin de **Lombok** si IntelliJ lo sugiere.
+5. Abrir `src/main/java/edu/dosw/parcial/main/ParcialApplication.java`, ejecutarla una vez y luego en *Run → Edit Configurations → Environment variables* agregar `JWT_SECRET=<valor_base64>`.
+
+**7. Verificar el despliegue y el pipeline**
+
+No se necesita configurar nada de Azure ni de Docker Hub en el PC nuevo: los secrets ya están en GitHub y la configuración en el App Service.
+
+1. Hacer un cambio, commit y push a `develop`:
+   ```bash
+   git add .
+   git commit -m "mensaje"
+   git push origin develop
+   ```
+2. Revisar en GitHub → *Actions* que el workflow **CI/CD — DOSW Parcial T2** quede en verde (test → docker → deploy).
+3. Abrir https://dosw-parcialt2-juanalvarez.azurewebsites.net/api/v1/health y https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html. La primera petición puede tardar 30–60 s si el servicio estaba inactivo (plan gratuito).
+
+### 7.2 Comandos rápidos
+
 **Mongo local con Docker**
 
 ```bash
@@ -149,7 +252,7 @@ docker run -d -p 27017:27017 --name mongo-parcial mongo:7
 
 ```bash
 export JWT_SECRET=$(openssl rand -base64 48)
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 **Local con Docker**
@@ -164,7 +267,8 @@ Luego abrir http://localhost:8080/api/v1/health y http://localhost:8080/swagger-
 ## 8. Pruebas
 
 ```bash
-mvn test
+./mvnw test        # macOS / Linux
+.\mvnw.cmd test    # Windows
 ```
 
 El reporte de cobertura de Jacoco queda en `target/site/jacoco/index.html`.
