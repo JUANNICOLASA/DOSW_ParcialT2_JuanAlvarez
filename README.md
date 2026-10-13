@@ -315,3 +315,50 @@ _Captura del workflow en verde:_
 **Herramienta de diseño: Figma**
 
 ![Figma](docs/images/figma.jpg)
+---
+
+Solucion:
+
+Punto 2:
+
+**Diagrama de componentes general**
+
+![img.png](img.png)
+
+**Diagrama de componentes específico**
+
+![img_1.png](img_1.png)
+
+**Diagrama de clases**
+
+![img_2.png](img_2.png)
+
+**Preguntas:**
+
+Preguntas para la revisión con Arquitectura:
+
+¿Qué problemas aparecen cuando no se separan correctamente las capas? Presenten un ejemplo del caso y expliquen cómo distribuyen sus responsabilidades.
+
+Alto acoplamiento, duplicación y dificultad para probar o modificar.
+
+¿Qué diferencia existe entre un validador, una utilidad y un servicio? Ubiquen un ejemplo de cada uno en su diseño e indiquen su responsabilidad.
+
+Validador: Comprueba que los datos o reglas se cumplan; por ejemplo, verificar que un correo tenga un formato válido.
+
+Utilidad: Ofrece una operación genérica, reutilizable y normalmente sin lógica de negocio; por ejemplo, formatear una fecha.
+
+Servicio: Coordina un caso de uso o implementa una capacidad del negocio; por ejemplo, registrar un usuario.
+
+¿Qué diferencia existe entre el Mapper IN y el Mapper OUT? Indiquen dónde se ubican y qué representaciones transforman cada uno.
+
+Mapper IN: Se ubica en la entrada de la aplicación y transforma datos externos como una solicitud HTTP en objetos que entiende el caso de uso.
+
+Mapper OUT: Se ubica en la salida y transforma objetos internos en representaciones externas como entidades de base de datos o respuestas de una API.
+
+Retomen las tres reglas clasificadas en el paso anterior: ¿en qué componente debe ejecutarse cada una y por qué? 
+
+Formato o estructura → validador de entrada.
+
+Regla propia del negocio → dominio o servicio.
+
+Restricción dependiente de datos externos → adaptador o servicio de salida.
