@@ -410,3 +410,60 @@ Gracias a esta separación, el controller nunca manipula un documento, el servic
 | La edad de la mascota debe estar entre 0 y 360 meses. | Entrada | `MascotaRequest` (anotaciones `@Min(0)` y `@Max(360)`), validado con `@Valid` en `MascotaController`. El error lo construye `GlobalExceptionHandler` (400). | Solo depende del dato recibido. Se rechaza lo antes posible, sin llegar al service ni a la base de datos. |
 | La mascota debe estar DISPONIBLE para adoptarse. | Negocio | `AdopcionService`, usando `Mascota.estaDisponible()` (409). | Requiere consultar el estado actual de la mascota en la base de datos, y esa coordinación le corresponde al service. |
 | La nueva fecha del aplazamiento debe ser posterior a la actual y no superar 15 días adicionales. | Negocio | `AdopcionValidator`, invocado por `AdopcionService` (422). | En el punto 1 se clasificó como de entrada, pero su cumplimiento depende de la fecha ya registrada en la solicitud, que está guardada en la base de datos. Por eso se valida después de cargar la solicitud, junto con la regla de máximo un aplazamiento. |
+
+## Punto 4: Asignación del Equipo de Seguridad - Proteger el acceso y la información
+
+#### ¿Cuál es la diferencia entre autenticación, autorización e integridad? Expliquen dónde y cómo aplicarán cada concepto en la API, con ejemplos del caso.
+
+| Concepto | Pregunta que responde | Dónde se aplica | Ejemplo en Paw Connect |
+|---|---|---|---|
+| **Autenticación** | ¿Quién es el usuario? | `AuthController` y `AuthService` en el inicio de sesión; `JwtAuthenticationFilter` en cada petición posterior. | El usuario envía su correo y contraseña a `POST /api/v1/auth/login`. `AuthService` busca el usuario, compara la contraseña con el hash BCrypt guardado y, si coinciden, `JwtService` genera un token con su id y su rol. En las siguientes peticiones el filtro valida ese token; si falta o es inválido, la respuesta es **401**. |
+| **Autorización** | ¿Qué puede hacer ese usuario? | `SecurityConfig` (reglas por rol) y `AdopcionService` (verificación de propiedad). | Solo un ADMIN puede crear mascotas y solo un ADOPTANTE puede adoptar; si un ADOPTANTE intenta crear una mascota, recibe **403**. Además, al aplazar, el servicio comprueba que la solicitud pertenezca al adoptante del token; si es de otra persona, también recibe **403**. |
+| **Integridad** | ¿La información llegó y se guardó sin alteraciones? | Firma del JWT, HTTPS y reglas de cambio de estado. | El token se firma con HMAC-SHA256 usando `JWT_SECRET`: si alguien modifica el rol dentro del token, la firma deja de coincidir y se rechaza. La comunicación con Azure y con MongoDB viaja cifrada (TLS). Además, si una adopción falla, no se crea la solicitud ni se cambia el estado de la mascota, de modo que los datos no quedan a medias. |
+
+En resumen, la autenticación identifica, la autorización limita lo que esa identidad puede hacer y la integridad garantiza que ni el token ni los datos se modifiquen de forma indebida.
+
+#### Seleccionen dos riesgos del OWASP Top 10 que se pueden encontrar en su API. Para cada uno, describan cómo se vería ese escenario aplicable a la barbería, su mitigación y cómo verificarían que el control funciona.
+
+*El enunciado menciona la barbería; los escenarios se plantean sobre el caso Paw Connect.*
+
+**A01:2021 – Pérdida de control de acceso (Broken Access Control)**
+
+- **Escenario:** un adoptante autenticado cambia el identificador de la ruta en `PATCH /api/v1/adopciones/{id}/aplazamiento` y aplaza la solicitud de otra persona. Otro caso sería que un ADOPTANTE invoque `POST /api/v1/mascotas`, que es exclusivo del ADMIN.
+- **Mitigación:**
+  - Reglas por rol en `SecurityConfig` (o `@PreAuthorize`) para cada endpoint, siguiendo la matriz de códigos HTTP.
+  - En `AdopcionService`, el adoptante se toma **del token** y nunca del cuerpo de la petición. Antes de aplazar se verifica que `solicitud.adoptanteId` sea igual al id del usuario autenticado.
+  - Todo lo que no esté explícitamente permitido queda denegado (`anyRequest().authenticated()`).
+- **Verificación:**
+  - Prueba unitaria de `AdopcionService`: aplazar una solicitud de otro adoptante lanza la excepción de acceso denegado y el repositorio nunca guarda cambios (`verify(repository, never()).save(any())`).
+  - Pruebas con `MockMvc` y `@WithMockUser(roles = "ADOPTANTE")`: crear una mascota responde 403; sin token, cualquier endpoint protegido responde 401.
+  - Prueba manual en Swagger con los dos roles.
+
+**A07:2021 – Fallas de identificación y autenticación (Identification and Authentication Failures)**
+
+- **Escenario:** un atacante prueba muchas contraseñas contra el login. O bien obtiene un token que nunca vence, o se aprovecha de un mensaje de error que revela si un correo existe en el sistema.
+- **Mitigación:**
+  - Contraseñas guardadas con **BCrypt**, nunca en texto plano.
+  - El token **expira** (`jwt.expiration-ms: 3600000`, es decir, una hora).
+  - `JWT_SECRET` es un valor aleatorio de al menos 256 bits que se lee de una variable de entorno, no del código.
+  - Mensaje de error **genérico** ("Credenciales inválidas") tanto si el correo no existe como si la contraseña es incorrecta.
+  - Si el MVP crece, se puede agregar un límite de intentos de inicio de sesión.
+- **Verificación:**
+  - Pruebas unitarias de `AuthService`: un correo inexistente y una contraseña incorrecta producen el mismo error.
+  - Pruebas de `JwtService`: un token vencido o con la firma alterada es rechazado.
+  - Revisar el repositorio y el pipeline para confirmar que ningún secreto aparece en el código (solo en GitHub Secrets y en Azure).
+
+#### ¿Cuál de los tipos de autenticación es el más adecuado para este MVP? Justifique su respuesta.
+
+El más adecuado es la **autenticación basada en tokens con JWT (Bearer token)**, por las siguientes razones:
+
+1. **Es una API REST sin estado.** El servidor no guarda sesiones; cada petición trae su token con la identidad y el rol (`STATELESS` en `SecurityConfig`). Esto encaja con el despliegue en un contenedor de Azure App Service, que puede reiniciarse o escalar sin perder sesiones.
+2. **Los roles viajan en el token.** El rol (ADMIN o ADOPTANTE) va dentro del token firmado, así que la autorización por endpoint no requiere consultar la base de datos en cada petición.
+3. **Se ajusta a los usuarios del caso.** Los usuarios están predefinidos en la base de datos con correo y contraseña, por lo que un login propio que entregue un JWT es suficiente.
+4. **Es práctico de usar y probar.** Swagger permite ingresar el token con el botón *Authorize*, como pide la parte práctica.
+
+**Comparación con las alternativas:**
+- **Basic Auth:** envía las credenciales en cada petición.
+- **Sesiones con cookies:** exigen guardar estado en el servidor y son menos naturales para una API.
+- **API Keys:** identifican aplicaciones, no usuarios con roles.
+- **OAuth 2.0 / OpenID Connect con un proveedor externo:** es más robusto, pero agrega una complejidad que este MVP todavía no necesita.
