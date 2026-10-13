@@ -204,10 +204,10 @@ _Captura del workflow en verde:_
 
 ## 11. Herramientas de modelado y diseño (evidencias)
 
-_Captura de la cuenta en Lucidchart / Draw.io / Miro:_
+**Herramienta de modelado: Draw.io** (almacenamiento en Google Drive)
 
-<!-- ![Modelado](docs/images/modelado.png) -->
+![Draw.io](docs/images/drawio.jpg)
 
-_Captura de la cuenta en Figma:_
+**Herramienta de diseño: Figma**
 
-<!-- ![Figma](docs/images/figma.png) -->
+![Figma](docs/images/figma.jpg)
