@@ -39,6 +39,10 @@ Se empaqueta en una imagen Docker y se despliega automáticamente en Azure App S
 | Health | https://dosw-parcialt2-juanalvarez.azurewebsites.net/api/v1/health |
 | Swagger | https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html |
 
+![Health](docs/images/health.jpg)
+
+![Swagger](docs/images/swagger.jpg)
+
 ## 4. Estructura del proyecto
 
 ```
@@ -167,11 +171,11 @@ El reporte de cobertura de Jacoco queda en `target/site/jacoco/index.html`.
 
 _Captura del resultado en verde:_
 
-<!-- ![Pruebas](docs/images/pruebas.png) -->
+![Pruebas](docs/images/pruebas.png)
 
 _Captura del reporte Jacoco:_
 
-<!-- ![Jacoco](docs/images/jacoco.png) -->
+![Jacoco](docs/images/jacoco.jpg)
 
 ## 9. Docker
 
@@ -182,7 +186,7 @@ docker run -p 8080:8080 -e JWT_SECRET=<su_secret_base64> dosw-parcial:local
 
 _Captura del contenedor corriendo:_
 
-<!-- ![Docker](docs/images/docker.png) -->
+![Docker](docs/images/docker.png)
 
 ## 10. CI/CD
 
@@ -196,7 +200,7 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 
 _Captura del workflow en verde:_
 
-<!-- ![CI/CD](docs/images/cicd.png) -->
+![CI/CD](docs/images/cicd.jpg)
 
 ## 11. Herramientas de modelado y diseño (evidencias)
 
