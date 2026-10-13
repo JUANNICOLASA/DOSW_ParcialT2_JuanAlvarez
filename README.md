@@ -18,11 +18,11 @@
 
 ## 1. Datos del estudiante
 
-| Campo | Valor |
-|---|---|
-| Nombre completo | Juan Nicolás Álvarez Muñoz |
-| Grupo | 2 |
-| Profesor agregado al repositorio | ✔ |
+| Campo                            | Valor                                                |
+|----------------------------------|------------------------------------------------------|
+| Nombres completos                | Juan Nicolás Álvarez Muñoz-Julian Camilo Giral Cobos |
+| Grupo                            | 2                                                    |
+| Profesor agregado al repositorio | ✔                                                    |
 
 ## 2. Descripción del proyecto
 
