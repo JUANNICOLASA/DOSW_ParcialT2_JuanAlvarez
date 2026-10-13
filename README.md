@@ -315,50 +315,98 @@ _Captura del workflow en verde:_
 **Herramienta de diseño: Figma**
 
 ![Figma](docs/images/figma.jpg)
+
 ---
 
-Solucion:
+# Fase de diseño — Parte Teórica
 
-Punto 2:
+## Punto 2: Asignación del equipo de Arquitectura - Distribución de las responsabilidades
 
-**Diagrama de componentes general**
+Fuentes de los diagramas (draw.io): `docs/uml/componentes-general.drawio`, `docs/uml/componentes-mvc.drawio` y `docs/uml/clases-dominio.drawio`.
 
-![img.png](img.png)
+### Diagrama de componentes general
 
-**Diagrama de componentes específico**
+![Diagrama de componentes general](docs/images/componentes-general.png)
 
-![img_1.png](img_1.png)
+**Descripción.** Muestra la API de Paw Connect como un único componente desplegable que recibe peticiones HTTP de un cliente (Swagger UI o Postman) y guarda la información en MongoDB. Dentro de la API se distinguen tres capas (presentación, negocio y persistencia) y dos componentes de configuración (seguridad JWT y documentación OpenAPI).
 
-**Diagrama de clases**
+**Justificación.**
+- Se aplica una **arquitectura por capas**: cada capa solo depende de la siguiente (controller → core → persistence). Así, un cambio en la base de datos no obliga a modificar los controladores y un cambio en el contrato HTTP no afecta las reglas de negocio.
+- La **seguridad** se representa como un componente independiente porque actúa antes de que la petición llegue a cualquier controlador: si el token no es válido, la petición no avanza.
+- La capa de negocio y la de persistencia se comunican con **objetos de dominio**, no con DTOs ni con documentos de MongoDB. Esto mantiene el núcleo del sistema libre de detalles técnicos.
+- Las flechas son dependencias «use»: indican qué componente necesita a cuál y en qué sentido viaja la solicitud.
 
-![img_2.png](img_2.png)
+### Diagrama de componentes específico (MVC)
 
-**Preguntas:**
+![Diagrama de componentes específico MVC](docs/images/componentes-mvc.png)
 
-Preguntas para la revisión con Arquitectura:
+**Descripción.** Detalla los componentes de cada paquete del proyecto (`config`, `controller`, `core` y `persistence`) y cómo colaboran para atender los cinco casos de uso:
 
-¿Qué problemas aparecen cuando no se separan correctamente las capas? Presenten un ejemplo del caso y expliquen cómo distribuyen sus responsabilidades.
+| Caso de uso | Controller | Service | Validator | Repositories |
+|---|---|---|---|---|
+| Iniciar sesión | AuthController | AuthService (+ JwtService) | — (validación del DTO) | UsuarioRepository |
+| Crear una mascota | MascotaController | MascotaService | MascotaValidator | MascotaRepository, NodoRefugioRepository |
+| Adoptar una mascota | AdopcionController | AdopcionService | AdopcionValidator | SolicitudAdopcionRepository, MascotaRepository |
+| Consultar mascotas adoptadas | AdopcionController | AdopcionService | — | SolicitudAdopcionRepository |
+| Aplazar recibimiento | AdopcionController | AdopcionService | AdopcionValidator | SolicitudAdopcionRepository |
 
-Alto acoplamiento, duplicación y dificultad para probar o modificar.
+**Justificación.**
+- **Un controller por recurso** (autenticación, mascotas y adopciones). Los tres casos de adopción comparten el recurso *solicitud de adopción*, por eso quedan en `AdopcionController` y `AdopcionService`.
+- **Mapper IN en `controller/mappers`** y **Mapper OUT en `persistence/mappers`**, uno por tipo de objeto, como se definió en la estructura del proyecto. El controller nunca ve un Document y el service nunca ve un DTO.
+- Los **validators** concentran las reglas de negocio que pueden evaluarse con los datos ya cargados (compatibilidad, rango de fechas, cantidad de aplazamientos). El service se limita a coordinar el flujo, lo que facilita probar cada regla por separado.
+- **Un repository por colección**. `MascotaService` usa `NodoRefugioRepository` para comprobar que el nodo de origen exista y sea de tipo REFUGIO (escenario E03). `AdopcionService` usa `MascotaRepository` para verificar la disponibilidad y cambiar el estado de la mascota a EN_PROCESO.
+- `GlobalExceptionHandler` traduce las excepciones a los códigos HTTP de la matriz (400, 401, 403, 404, 409 y 422) en un solo lugar, para que todas las respuestas de error tengan el mismo formato.
+- Todas las dependencias se inyectan **por constructor**, lo que permite reemplazarlas por *mocks* en las pruebas unitarias.
 
-¿Qué diferencia existe entre un validador, una utilidad y un servicio? Ubiquen un ejemplo de cada uno en su diseño e indiquen su responsabilidad.
+### Diagrama de clases: modelos de dominio
 
-Validador: Comprueba que los datos o reglas se cumplan; por ejemplo, verificar que un correo tenga un formato válido.
+![Diagrama de clases de dominio](docs/images/clases-dominio.png)
 
-Utilidad: Ofrece una operación genérica, reutilizable y normalmente sin lógica de negocio; por ejemplo, formatear una fecha.
+**Descripción.** Representa las clases del paquete `core/models`: la jerarquía de refugios, la mascota con su compatibilidad, la solicitud de adopción con la declaración del adoptante y el usuario con su rol, además de las enumeraciones que limitan los valores permitidos.
 
-Servicio: Coordina un caso de uso o implementa una capacidad del negocio; por ejemplo, registrar un usuario.
+**Justificación.**
+- **Patrón Composite** en la jerarquía de refugios. `NodoRefugio` es la abstracción común; `NodoCompuesto` representa la red nacional y las ciudades, y `Refugio` es la hoja que alberga mascotas. Como ambos responden a `obtenerMascotas()`, consultar un refugio individual o una red completa es la misma operación, tal como pide el contexto del sistema.
+- **Patrón Iterator** con `RecorridoCatalogo`. Permite recorrer la jerarquía de distintas formas (en profundidad o por niveles) sin exponer cómo están organizados los nodos internamente.
+- **Enumeraciones** (`Especie`, `Tamano`, `EstadoMascota`, `EstadoSolicitud`, `Rol`, `TipoNodo`) para que solo existan los valores definidos por Producto. En el código los identificadores se escriben sin tildes ni eñes (`PEQUENO`); en la API el valor se muestra como `PEQUEÑO` mediante `@JsonValue`.
+- **Objetos de valor** `Compatibilidad` y `DeclaracionAdoptante`. Agrupan los tres criterios (niños, otras mascotas y espacios reducidos) y hacen que la comparación sea un solo método: `Compatibilidad.admite(declaracion)`.
+- **Modelo con comportamiento**. Las reglas que dependen solo del propio objeto viven en él: `Mascota.estaDisponible()`, `SolicitudAdopcion.puedeAplazarse()` y `SolicitudAdopcion.aplazar()`. Así no se repiten en varios servicios.
+- `SolicitudAdopcion` guarda `mascotaId` y `adoptanteId` como referencias. La restricción *"un adoptante solo puede tener una solicitud activa"* se indica en la asociación con `Usuario` y se verifica en `AdopcionService`.
 
-¿Qué diferencia existe entre el Mapper IN y el Mapper OUT? Indiquen dónde se ubican y qué representaciones transforman cada uno.
+### Preguntas para la revisión con Arquitectura
 
-Mapper IN: Se ubica en la entrada de la aplicación y transforma datos externos como una solicitud HTTP en objetos que entiende el caso de uso.
+#### ¿Qué problemas aparecen cuando no se separan correctamente las capas? Presenten un ejemplo del caso y expliquen cómo distribuyen sus responsabilidades.
 
-Mapper OUT: Se ubica en la salida y transforma objetos internos en representaciones externas como entidades de base de datos o respuestas de una API.
+Cuando las capas no se separan aparecen **alto acoplamiento**, **duplicación** de reglas y **dificultad para probar o modificar** el sistema.
 
-Retomen las tres reglas clasificadas en el paso anterior: ¿en qué componente debe ejecutarse cada una y por qué? 
+**Ejemplo del caso.** Si `AdopcionController` consultara directamente `MascotaRepository`, verificara si la mascota está DISPONIBLE y guardara la solicitud, ocurriría lo siguiente:
+- La regla de disponibilidad quedaría escrita en el controller. Si otro flujo la necesita, tendría que copiarse.
+- Para probar la regla habría que levantar el servidor HTTP y la base de datos, en lugar de una prueba unitaria sencilla.
+- Un cambio en la colección de MongoDB obligaría a modificar el controller, aunque el contrato de la API no haya cambiado.
 
-Formato o estructura → validador de entrada.
+**Cómo distribuimos las responsabilidades:**
+- **Controller:** recibe la petición, valida el formato del DTO, lo convierte a dominio con el Mapper IN y devuelve la respuesta con el código HTTP correspondiente.
+- **Service:** coordina el caso de uso y aplica las reglas de negocio, apoyándose en los validators.
+- **Repository:** solo guarda y consulta información, sin decidir nada sobre el negocio.
 
-Regla propia del negocio → dominio o servicio.
+#### ¿Qué diferencia existe entre un validador, una utilidad y un servicio? Ubiquen un ejemplo de cada uno en su diseño e indiquen su responsabilidad.
 
-Restricción dependiente de datos externos → adaptador o servicio de salida.
+| Tipo | Qué hace | Ejemplo en el diseño | Responsabilidad |
+|---|---|---|---|
+| **Validador** | Comprueba que los datos o las reglas se cumplan y lanza una excepción si no es así. No guarda ni consulta información. | `AdopcionValidator` (`core/validators`) | Verificar que la declaración del adoptante sea compatible con la mascota, que la fecha de recibimiento esté entre 1 y 15 días y que la solicitud no tenga ya un aplazamiento. |
+| **Utilidad** | Ofrece una operación genérica y reutilizable, sin reglas de negocio ni estado. | `FechaUtils` (`core/utils`) | Calcular los días entre dos fechas y obtener la fecha actual, para que los validadores no repitan ese cálculo. |
+| **Servicio** | Coordina un caso de uso completo: obtiene los datos, invoca validadores, cambia estados y persiste. | `AdopcionService` (`core/services`) | Ejecutar *Adoptar una mascota*: buscar la mascota, comprobar que no haya otra solicitud activa, validar, crear la solicitud APROBADA y cambiar la mascota a EN_PROCESO. |
+
+#### ¿Qué diferencia existe entre el Mapper IN y el Mapper OUT? Indiquen dónde se ubican y qué representaciones transforman cada uno.
+
+- **Mapper IN** (`controller/mappers`, por ejemplo `MascotaMapper`): está en la frontera con el cliente. Convierte el **DTO de entrada a objeto de dominio** (`MascotaRequest` → `Mascota`) y el **objeto de dominio a DTO de salida** (`Mascota` → `MascotaResponse`). Es decir, se ocupa de las dos direcciones del lado HTTP.
+- **Mapper OUT** (`persistence/mappers`, por ejemplo `MascotaPersistenceMapper`): está en la frontera con la base de datos. Convierte entre **objeto de dominio y documento de MongoDB** (`Mascota` ↔ `MascotaDocument`).
+
+Gracias a esta separación, el controller nunca manipula un documento, el service nunca recibe un DTO, y un cambio en la forma de almacenar los datos no altera el contrato de la API.
+
+#### Retomen las tres reglas clasificadas en el paso anterior: ¿en qué componente debe ejecutarse cada una y por qué?
+
+| Regla (punto 1) | Tipo | Componente | Por qué |
+|---|---|---|---|
+| La edad de la mascota debe estar entre 0 y 360 meses. | Entrada | `MascotaRequest` (anotaciones `@Min(0)` y `@Max(360)`), validado con `@Valid` en `MascotaController`. El error lo construye `GlobalExceptionHandler` (400). | Solo depende del dato recibido. Se rechaza lo antes posible, sin llegar al service ni a la base de datos. |
+| La mascota debe estar DISPONIBLE para adoptarse. | Negocio | `AdopcionService`, usando `Mascota.estaDisponible()` (409). | Requiere consultar el estado actual de la mascota en la base de datos, y esa coordinación le corresponde al service. |
+| La nueva fecha del aplazamiento debe ser posterior a la actual y no superar 15 días adicionales. | Negocio | `AdopcionValidator`, invocado por `AdopcionService` (422). | En el punto 1 se clasificó como de entrada, pero su cumplimiento depende de la fecha ya registrada en la solicitud, que está guardada en la base de datos. Por eso se valida después de cargar la solicitud, junto con la regla de máximo un aplazamiento. |
