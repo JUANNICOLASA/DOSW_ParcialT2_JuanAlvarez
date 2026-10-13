@@ -467,3 +467,127 @@ El más adecuado es la **autenticación basada en tokens con JWT (Bearer token)*
 - **Sesiones con cookies:** exigen guardar estado en el servidor y son menos naturales para una API.
 - **API Keys:** identifican aplicaciones, no usuarios con roles.
 - **OAuth 2.0 / OpenID Connect con un proveedor externo:** es más robusto, pero agrega una complejidad que este MVP todavía no necesita.
+
+## Punto 6: Asignación del Equipo de Devops - Definir cómo comprobar el comportamiento
+
+Fuente del diagrama (draw.io): `docs/uml/despliegue.drawio`.
+
+### Diagrama de despliegue
+
+![Diagrama de despliegue](docs/images/despliegue.png)
+
+**Descripción.** Muestra dónde se ejecuta cada parte de la solución y cómo se comunican:
+
+- **Equipo del usuario** («device»): consume la API desde un navegador (Swagger UI) o Postman, por **HTTPS en el puerto 443**, con el token JWT en el encabezado `Authorization`.
+- **Azure App Service** («device», Linux, plan F1): ejecuta un **contenedor Docker** basado en `eclipse-temurin:21-jre-alpine`. Dentro, la **JVM 21** ejecuta el artefacto `app.jar` (Spring Boot, puerto 8080).
+- **Especificación del despliegue** («deployment spec»): las *Application settings* `MONGODB_URI`, `JWT_SECRET` y `WEBSITES_PORT=8080`, que configuran el contenedor sin incluir secretos en la imagen.
+- **Azure Cosmos DB for MongoDB** («device»): contiene la base de datos `dosw_parcial` con sus cuatro colecciones. Se conecta mediante el **protocolo de MongoDB sobre TLS (puerto 10255)**.
+- **Cadena de entrega:**
+  1. El desarrollador hace `git push` a GitHub.
+  2. El *runner* de **GitHub Actions** compila, prueba y genera el `.jar`.
+  3. El runner publica la imagen en **Docker Hub** (`juanamunoz/dosw-parcial-t2:latest`).
+  4. El runner ordena el despliegue a Azure con un *Service Principal*.
+  5. App Service descarga la imagen desde Docker Hub (`docker pull`).
+
+**Justificación.**
+- Se separan los **nodos de cómputo** (App Service) y de **datos** (Cosmos DB) para que cada uno pueda administrarse y escalar por su cuenta. La aplicación es un artefacto sin estado y toda la información persistente queda en MongoDB.
+- Se usa una **imagen Docker multietapa**: la primera etapa compila con Maven y la segunda solo contiene el JRE y el `.jar`. Así la imagen final es más liviana y no incluye herramientas de compilación.
+- Los **secretos nunca forman parte del artefacto**: en el pipeline viven en GitHub Secrets y en ejecución en las *Application settings* de Azure. Por eso la misma imagen sirve para cualquier ambiente.
+- Toda comunicación externa viaja cifrada (HTTPS o TLS). El Service Principal solo tiene permisos sobre el grupo de recursos `rg-dosw-parcialt2`, según el principio de **mínimo privilegio**.
+- Las regiones (Canada Central para la aplicación y West US 2 para la base de datos) corresponden a las permitidas por la suscripción Azure for Students y a la capacidad disponible al crear los recursos.
+
+### Preguntas para la revisión con el equipo de Devops
+
+#### ¿Cuáles son las etapas principales de un pipeline CI/CD y qué propósito tiene cada una?
+
+| Etapa | Propósito | En nuestro pipeline (`.github/workflows/ci-cd.yml`) |
+|---|---|---|
+| **Disparo (trigger)** | Iniciar el proceso automáticamente cuando se integra código. | `push` a `develop` y `main`. |
+| **Obtención del código y del entorno** | Descargar el código y preparar las herramientas con versiones fijas para que el resultado sea reproducible. | `actions/checkout` y `actions/setup-java` (Temurin 21, con caché de Maven). |
+| **Compilación (build)** | Comprobar que el código compila con todas sus dependencias. | Job `test`: `mvn verify`. |
+| **Pruebas** | Confirmar que las reglas de negocio se siguen cumpliendo y medir la cobertura. | Job `test`: pruebas con JUnit y Mockito, y reporte de JaCoCo. |
+| **Análisis estático** | Detectar errores, vulnerabilidades y malas prácticas antes de desplegar. | SonarQube (`sonar-maven-plugin`), que se incorporará en la parte práctica. |
+| **Empaquetado y publicación** | Generar un artefacto versionado e inmutable y dejarlo en un registro. | Job `docker`: construcción de la imagen y publicación en Docker Hub. |
+| **Despliegue** | Poner la nueva versión en el ambiente de ejecución. | Job `deploy`: `azure/webapps-deploy` hacia App Service. |
+| **Verificación** | Confirmar que la versión desplegada responde. | Consulta de `/api/v1/health` y de Swagger en la URL pública. |
+
+Las etapas son secuenciales (`needs: test` y `needs: docker`), de modo que cada una solo se ejecuta si la anterior terminó bien.
+
+#### ¿Qué sucede si una prueba falla? ¿Debe permitirse el despliegue? Justifique.
+
+Si una prueba falla, `mvn verify` termina con error y el job `test` queda en rojo. Como `docker` y `deploy` dependen de él, **no se construye la imagen ni se despliega**, y el equipo ve en GitHub Actions qué prueba falló.
+
+**No debe permitirse el despliegue**, por estas razones:
+- Una prueba fallida es evidencia de que alguna regla no se cumple. Por ejemplo, podría permitirse adoptar una mascota que no está DISPONIBLE.
+- Desplegar así llevaría el error a producción y podría dejar datos inconsistentes, que son más difíciles de corregir que el código.
+- El pipeline funciona como una **compuerta de calidad**: se corrige la causa, se hace un nuevo push y el proceso se repite.
+
+Una aclaración: el `Dockerfile` compila con `-DskipTests`. Esto no salta el control, porque las pruebas ya se ejecutaron en el job anterior y la imagen solo se construye si pasaron.
+
+#### ¿Para qué sirven los logs y qué registrarían para investigar una reserva fallida o un error de autenticación?
+
+Los logs permiten **reconstruir lo que ocurrió** en una operación cuando no se puede depurar en producción. Sirven para diagnosticar errores, auditar acciones sensibles (quién adoptó o aplazó) y detectar comportamientos anómalos, como muchos intentos de inicio de sesión fallidos. Se usan niveles según la gravedad: **INFO** para operaciones exitosas, **WARN** para rechazos esperados por reglas de negocio o de seguridad, **ERROR** para fallos inesperados y **DEBUG** para detalle durante el desarrollo.
+
+*En el caso Paw Connect, la "reserva" corresponde a la solicitud de adopción.*
+
+- **Solicitud de adopción fallida:**
+  - Fecha y hora.
+  - Nivel WARN.
+  - Identificador de la petición (*traceId*).
+  - Endpoint.
+  - Id del adoptante (tomado del token) e id de la mascota.
+  - Regla que se incumplió (por ejemplo `MASCOTA_NO_DISPONIBLE`, `ADOPCION_INCOMPATIBLE`, `SOLICITUD_ACTIVA_EXISTENTE` o `FECHA_RECIBIMIENTO_INVALIDA`).
+  - Código HTTP devuelto.
+  - Ejemplo: `WARN [traceId=7f3a…] Adopción rechazada: adoptanteId=U-12, mascotaId=PERRO-002, motivo=ADOPCION_INCOMPATIBLE, status=422`
+- **Error de autenticación:**
+  - Fecha y hora.
+  - Nivel WARN.
+  - *traceId*.
+  - Endpoint.
+  - IP de origen.
+  - Motivo (credenciales inválidas, token vencido, firma inválida o token ausente).
+  - Código 401 o 403.
+  - Ejemplo: `WARN [traceId=91bc…] Token rechazado: motivo=TOKEN_EXPIRADO, ruta=/api/v1/adopciones, ip=190.x.x.x, status=401`
+
+#### Presente ejemplos de información útil para rastrear la operación y de datos que no deben registrarse.
+
+| Útil para rastrear la operación | No debe registrarse |
+|---|---|
+| *traceId* o identificador de la petición | Contraseñas, aunque sean incorrectas |
+| Fecha, hora y duración de la operación | Tokens JWT completos o el encabezado `Authorization` |
+| Endpoint y método HTTP | `JWT_SECRET`, `MONGODB_URI` con usuario y contraseña, tokens de Docker Hub o credenciales de Azure |
+| Id del usuario y su rol (no su correo completo) | Correos completos u otros datos personales del adoptante |
+| Id de la mascota y de la solicitud | La declaración personal completa del adoptante (si tiene niños, el tipo de vivienda) |
+| Estado anterior y nuevo (DISPONIBLE → EN_PROCESO) | Cuerpos completos de petición o respuesta |
+| Regla incumplida y código HTTP | Trazas de error en respuestas al cliente |
+| Nombre de la excepción y traza completa (solo en ERROR, en el log interno) | — |
+
+#### Que diferencia debe existir entre el detalle del log interno del mensaje que recibe el cliente.
+
+- **Log interno:** es para el equipo de desarrollo y soporte. Debe ser detallado: tipo de excepción, traza completa, clase y método donde ocurrió, identificadores involucrados y la causa técnica (por ejemplo, el tiempo de espera agotado al conectar con MongoDB).
+- **Mensaje al cliente:** debe ser claro y suficiente para corregir la petición, pero **sin revelar detalles de la implementación**. Incluye el código HTTP, un mensaje entendible, los campos inválidos cuando aplique y el mismo *traceId*, para que soporte pueda ubicar el registro interno.
+
+Exponer trazas, nombres de clases o consultas facilitaría ataques, porque mostraría la tecnología y la estructura interna de la aplicación.
+
+**Ejemplo para un error inesperado.**
+
+Respuesta al cliente (500):
+
+```json
+{
+  "timestamp": "2026-10-13T15:42:10Z",
+  "status": 500,
+  "error": "Error interno",
+  "message": "No fue posible procesar la solicitud. Intente más tarde.",
+  "path": "/api/v1/adopciones",
+  "traceId": "7f3a2c91"
+}
+```
+
+Log interno:
+
+```
+ERROR [traceId=7f3a2c91] AdopcionService.adoptar - MongoTimeoutException: Timed out after 30000 ms while waiting to connect ... (traza completa)
+```
+
+Para un error de negocio (por ejemplo 409, mascota no disponible), el cliente recibe un mensaje específico como *"La mascota no está disponible para adopción"*. El log interno registra además los ids y el estado actual de la mascota.
