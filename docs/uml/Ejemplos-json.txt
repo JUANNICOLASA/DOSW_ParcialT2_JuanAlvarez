@@ -1,0 +1,80 @@
+#Crear Mascota
+
+#Entrada 
+
+{
+  "Especie": "string",
+  "Tamaño": "string",
+  "Edad": "int"
+}
+
+#Salida
+
+{
+  "Especie": "string",
+  "Tamaño": "string",
+  "Edad": "int"
+  "Id":"string"
+}
+
+#Adoptar mascota
+
+#Entrada
+
+{
+  "Tiene niños": "string",
+  "Tiene mascota": "string",
+  "Fecha": "string"
+}
+
+#Salida
+
+{
+  "Fecha": "string",
+  "Id Solicitud": "string",
+}
+
+#Consultar mascotas adoptadas
+
+#Entrada
+
+{
+  "Especie": "string",
+  "Tamaño": "string",
+  "ID": "string"
+}
+
+#Salida
+
+{
+  "Adoptados": "List"
+}
+
+#Aplazar recibimiento
+
+#Entrada
+
+{
+  "Solicitudid": "string",
+  "Fecha": "string"
+}
+
+#Salida
+
+{
+  "Fecha": "String"
+}
+
+#Iniciar Sesion
+
+#Entrada
+
+{
+  "Correo": "string",
+}
+
+#Salida
+
+{
+  "Id": "String"
+}

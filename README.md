@@ -315,3 +315,25 @@ _Captura del workflow en verde:_
 **Herramienta de diseño: Figma**
 
 ![Figma](docs/images/figma.jpg)
+
+## Punto 1: Asignación del equipo de Producto - Definición del contrato de la API
+
+![Reto 1](docs/images/Tablareto1.png)
+
+Ejemplos en doc: (docs/uml/Ejemplos-json.txt)
+
+### Preguntas para la revisión con Producto:
+
+#### ¿Cuál es la diferencia entre una validación de entrada y una validación de negocio? Seleccionen tres reglas del caso, incluyendo al menos una de cada tipo, y justifiquen su clasificación.
+
+Las validaciones de entrada se encargan de que los datos que ingresan esten correctos en cuanto a formato, rango,...,etc. Mientras que las validaciones de negocio se encarga de los cambios de estado (disponible, no disponible), que no se generen errores de repeticion etc.
+
+1- Crear una mascota - Validacion de entrada = La edad tiene que estar dentro de un rango  (Edad entre 0 y 360 meses)
+
+2- Adoptar una mascota - Validacion de negocio = La mascota debe estar disponible 
+
+3- Aplazar recibimiento de una mascota  - Validacion de entrada = La nueva fecha tambien tiene que estar dentro de un rango (. La nueva fecha debe ser posterior a la actual y no superar 15 días adicionales.)
+
+#### En Crear Mascota, ¿cómo debe responder la API si fallan varias condiciones? Expliquen qué error se informa y qué cambios deben evitarse.
+
+Deberia responder con un error de validacion indicando todos los campos invalidos identificados, no solo el primero que se identifico. Se deberia evitar crear las mascota directamente en la base de datos, y no se deberia modificar ningun dato existente.
