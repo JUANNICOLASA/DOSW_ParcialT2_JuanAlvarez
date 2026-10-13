@@ -35,9 +35,9 @@ Se empaqueta en una imagen Docker y se despliega automáticamente en Azure App S
 
 | Recurso | URL |
 |---|---|
-| Servicio en Azure | https://_NOMBRE-APP_.azurewebsites.net |
-| Health | https://_NOMBRE-APP_.azurewebsites.net/api/v1/health |
-| Swagger | https://_NOMBRE-APP_.azurewebsites.net/swagger-ui/index.html |
+| Servicio en Azure | https://dosw-parcialt2-juanalvarez.azurewebsites.net |
+| Health | https://dosw-parcialt2-juanalvarez.azurewebsites.net/api/v1/health |
+| Swagger | https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html |
 
 ## 4. Estructura del proyecto
 
