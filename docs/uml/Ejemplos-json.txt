@@ -3,18 +3,21 @@
 #Entrada 
 
 {
-  "Especie": "string",
-  "Tamaño": "string",
-  "Edad": "int"
+  "especie": "Perro",
+  "tamano": "MEDIANO",
+  "edad": 24
 }
 
 #Salida
 
 {
-  "Especie": "string",
-  "Tamaño": "string",
-  "Edad": "int"
-  "Id":"string"
+  "id": "mascota-101",
+  "especie": "Perro",
+  "nombre": "Max",
+  "raza": "Labrador",
+  "tamano": "MEDIANO",
+  "edad": 24,
+  "disponible": true
 }
 
 #Adoptar mascota
@@ -22,16 +25,17 @@
 #Entrada
 
 {
-  "Tiene niños": "string",
-  "Tiene mascota": "string",
-  "Fecha": "string"
+  "mascotaId": "mascota-101"
 }
 
 #Salida
 
 {
-  "Fecha": "string",
-  "Id Solicitud": "string",
+  "adopcionId": "adopcion-201",
+  "mascotaId": "mascota-101",
+  "usuarioId": "usuario-301",
+  "estado": "PENDIENTE",
+  "fechaSolicitud": "2026-10-13"
 }
 
 #Consultar mascotas adoptadas
@@ -39,30 +43,38 @@
 #Entrada
 
 {
-  "Especie": "string",
-  "Tamaño": "string",
-  "ID": "string"
+  "mascotaId": "mascota-101",
+  "raza": "Labrador",
+  "tamano": "MEDIANO"
 }
 
 #Salida
 
 {
-  "Adoptados": "List"
+  "mascotaId": "mascota-101",
+  "nombre": "Max",
+  "especie": "Perro",
+  "raza": "Labrador",
+  "tamano": "MEDIANO",
+  "edad": 24,
+  "estadoAdopcion": "APROBADA",
+  "fechaAdopcion": "2026-10-13"
 }
-
 #Aplazar recibimiento
 
 #Entrada
 
 {
-  "Solicitudid": "string",
-  "Fecha": "string"
+  "nuevaFecha": "2026-10-20"
 }
 
 #Salida
 
 {
-  "Fecha": "String"
+  "adopcionId": "adopcion-201",
+  "fechaRecibimientoAnterior": "2026-10-15",
+  "nuevaFechaRecibimiento": "2026-10-20",
+  "estado": "APROBADA"
 }
 
 #Iniciar Sesion
@@ -70,11 +82,15 @@
 #Entrada
 
 {
-  "Correo": "string",
+  "correo": "carlos@ejemplo.com",
+  "contrasena": "Ejemplo123"
 }
-
 #Salida
 
 {
-  "Id": "String"
+  "token": "eyJhbGciOiJIUzI1NiJ9.ejemplo",
+  "usuarioId": "usuario-301",
+  "nombre": "Carlos Pérez",
+  "correo": "carlos@ejemplo.com",
+  "rol": "ADOPTANTE"
 }
