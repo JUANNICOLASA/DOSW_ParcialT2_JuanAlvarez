@@ -18,11 +18,11 @@
 
 ## 1. Datos del estudiante
 
-| Campo                            | Valor                                                |
-|----------------------------------|------------------------------------------------------|
-| Nombres completos                | Juan Nicolás Álvarez Muñoz-Julian Camilo Giral Cobos |
-| Grupo                            | 2                                                    |
-| Profesor agregado al repositorio | ✔                                                    |
+| Campo | Valor |
+|---|---|
+| Nombre completo | Juan Nicolás Álvarez Muñoz |
+| Grupo | 2 |
+| Profesor agregado al repositorio | ✔ |
 
 ## 2. Descripción del proyecto
 
@@ -316,9 +316,34 @@ _Captura del workflow en verde:_
 
 ![Figma](docs/images/figma.jpg)
 
----
+## Punto 1: Asignación del equipo de Producto - Definición del contrato de la API
 
-# Fase de diseño — Parte Teórica
+![Tabla](docs/images/Punto1.1.png)
+
+![Tabla](docs/images/Punto1.2.png)
+
+![Tabla](docs/images/Punto1.3.png)
+
+Ejemplos en doc: (docs/uml/Ejemplos-json.txt)
+
+### Preguntas para la revisión con Producto:
+
+#### ¿Cuál es la diferencia entre una validación de entrada y una validación de negocio? Seleccionen tres reglas del caso, incluyendo al menos una de cada tipo, y justifiquen su clasificación.
+
+Las validaciones de entrada comprueban que los datos recibidos tengan el formato, tipo, rango o estructura esperados antes de procesarlos. Mientras que las validaciones de negocio comprueban que una operación cumpla las reglas del sistema y que su estado actual permita ejecutarla.
+
+1- Crear una mascota - Validacion de entrada = La edad tiene que estar dentro de un rango  (Edad entre 0 y 360 meses) = Comprueba que el valor esté dentro del rango permitido.
+
+2- Adoptar una mascota - Validacion de negocio = La mascota debe estar disponible = Depende del estado actual de la mascota.
+
+3- Aplazar recibimiento de una mascota  - Validacion de entrada = La nueva fecha tambien tiene que estar dentro de un rango (. La nueva fecha debe ser posterior a la actual y no superar 15 días adicionales.) = Comprueba que la fecha cumpla las restricciones definidas para el dato recibido.
+
+#### En Crear Mascota, ¿cómo debe responder la API si fallan varias condiciones? Expliquen qué error se informa y qué cambios deben evitarse.
+
+La API deberia responder con un código HTTP 400 Bad Request e informar los errores de validación encontrados, indicando qué campos son inválidos y por qué.
+
+Se deberia evitar crear las mascota directamente en la base de datos, y no se deberia modificar ningun dato existente.
+
 
 ## Punto 2: Asignación del equipo de Arquitectura - Distribución de las responsabilidades
 
