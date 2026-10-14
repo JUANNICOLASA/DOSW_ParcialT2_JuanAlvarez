@@ -39,7 +39,10 @@ public class SecurityConfig {
                                 "/actuator/health"
                         ).permitAll()
                         .requestMatchers("/api/v1/mascotas").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/adopciones/**").hasRole("ADOPTANTE")
+                        .requestMatchers("/api/v1/mascotas-adoptadas/**")
+                        .hasAnyRole("ADMIN", "ADOPTANTE")
+                        .requestMatchers("/api/v1/adopciones/**")
+                        .hasRole("ADOPTANTE")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
