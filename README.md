@@ -436,6 +436,28 @@ Gracias a esta separación, el controller nunca manipula un documento, el servic
 | La mascota debe estar DISPONIBLE para adoptarse. | Negocio | AdopcionService, usando Mascota.estaDisponible() (409). | Requiere consultar el estado actual de la mascota en la base de datos, y esa coordinación le corresponde al service. |
 | La nueva fecha del aplazamiento debe ser posterior a la actual y no superar 15 días adicionales. | Negocio | AdopcionValidator, invocado por AdopcionService (422). | En el punto 1 se clasificó como de entrada, pero su cumplimiento depende de la fecha ya registrada en la solicitud, que está guardada en la base de datos. Por eso se valida después de cargar la solicitud, junto con la regla de máximo un aplazamiento. |
 
+## Punto 3: Asignación del equipo de Base de Datos - Diseño de la persistencia
+
+### Diseño de la base de datos
+
+Para Paw Connect se propone utilizar MongoDB, organizando la información en las colecciones refugios, mascotas y adopciones.
+
+En refugios se guardará la información de los refugios y su jerarquía. En mascotas se almacenarán los datos de cada animal, incluyendo sus características y compatibilidades. En adopciones se guardarán las solicitudes y su información relacionada.
+
+### Documentos embebidos y referencias
+
+Se utilizarán documentos embebidos para almacenar las características y compatibilidades de las mascotas, ya que hacen parte de su información. Para relacionar los refugios, las mascotas y las adopciones se utilizarán referencias, evitando repetir información innecesariamente.
+
+### Ventaja y desventaja
+
+Una ventaja es que este diseño permite organizar la información y mantener separados los datos que se administran de manera independiente.
+
+Una desventaja es que algunas consultas pueden necesitar acceder a varias colecciones para obtener toda la información relacionada.
+
+### Diagrama de bases de datos no relacionales
+
+![Diagrama BD](docs/images/Diagrama BD.png)
+
 ## Punto 4: Asignación del Equipo de Seguridad - Proteger el acceso y la información
 
 #### ¿Cuál es la diferencia entre autenticación, autorización e integridad? Expliquen dónde y cómo aplicarán cada concepto en la API, con ejemplos del caso.
