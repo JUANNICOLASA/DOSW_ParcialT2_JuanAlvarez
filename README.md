@@ -549,6 +549,68 @@ ERROR [traceId=7f3a2c91] AdopcionService.adoptar - MongoTimeoutException: Timed 
 
 Para un error de negocio (por ejemplo 409, mascota no disponible), el cliente recibe un mensaje específico como *"La mascota no está disponible para adopción"*. El log interno registra además los ids y el estado actual de la mascota.
 
+## Evidencias de pruebas funcionales
+
+Las pruebas funcionales se realizaron utilizando Swagger UI, con el objetivo de verificar el funcionamiento de los endpoints principales de la aplicación, la autenticación mediante JWT y el control de acceso a los recursos protegidos.
+
+### 1. Verificación del estado de la aplicación
+
+**Endpoint:** GET /api/v1/health
+
+**Resultado:** 200 OK
+
+Se verificó que la aplicación estuviera funcionando correctamente y que este endpoint pudiera consultarse sin autenticación.
+
+**Captura de pantalla:**
+
+![Pruebas SWAGGER](docs/images/PH.png)
+
+### 2. Inicio de sesión
+
+**Endpoint:** POST /api/v1/auth/login
+
+**Resultado:** 200 OK
+
+Se comprobó el inicio de sesión con credenciales válidas. La respuesta incluyó un token JWT y la información del usuario autenticado.
+
+**Captura de pantalla:**
+
+![Pruebas SWAGGER](docs/images/PL.png)
+
+### 3. Creación de una mascota
+
+**Endpoint:** POST /api/v1/mascotas
+
+**Resultado:** 201 Created
+
+Se registró una mascota con sus datos básicos, información de compatibilidad y el identificador del refugio correspondiente. La respuesta confirmó la creación de la mascota con estado DISPONIBLE.
+
+**Captura de pantalla:**
+
+![Pruebas SWAGGER](docs/images/PM.png)
+
+### 4. Consulta de mascotas adoptadas
+
+**Endpoint:** GET /api/v1/mascotas-adoptadas
+
+**Resultado:** 200 OK
+
+Se consultó el listado de mascotas adoptadas utilizando autenticación. La respuesta fue una lista vacía ([]), lo que indica que en ese momento no había registros para mostrar en este endpoint.
+
+**Captura de pantalla:**
+
+![Pruebas SWAGGER](docs/images/PA.png)
+
+### 6. Creación de una solicitud de adopción
+
+**Endpoint:** POST /api/v1/adopciones
+
+**Estado:** Pendiente de validación.
+
+**Captura de pantalla:**
+
+![Pruebas SWAGGER](docs/images/PC.png)
+
 ## Implementación y evidencias
 
 ### Ejecución de la aplicación y de las pruebas
