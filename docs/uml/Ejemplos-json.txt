@@ -1,0 +1,96 @@
+#Crear Mascota
+
+#Entrada 
+
+{
+  "especie": "Perro",
+  "tamano": "MEDIANO",
+  "edad": 24
+}
+
+#Salida
+
+{
+  "id": "mascota-101",
+  "especie": "Perro",
+  "nombre": "Max",
+  "raza": "Labrador",
+  "tamano": "MEDIANO",
+  "edad": 24,
+  "disponible": true
+}
+
+#Adoptar mascota
+
+#Entrada
+
+{
+  "mascotaId": "mascota-101"
+}
+
+#Salida
+
+{
+  "adopcionId": "adopcion-201",
+  "mascotaId": "mascota-101",
+  "usuarioId": "usuario-301",
+  "estado": "PENDIENTE",
+  "fechaSolicitud": "2026-10-13"
+}
+
+#Consultar mascotas adoptadas
+
+#Entrada
+
+{
+  "mascotaId": "mascota-101",
+  "raza": "Labrador",
+  "tamano": "MEDIANO"
+}
+
+#Salida
+
+{
+  "mascotaId": "mascota-101",
+  "nombre": "Max",
+  "especie": "Perro",
+  "raza": "Labrador",
+  "tamano": "MEDIANO",
+  "edad": 24,
+  "estadoAdopcion": "APROBADA",
+  "fechaAdopcion": "2026-10-13"
+}
+#Aplazar recibimiento
+
+#Entrada
+
+{
+  "nuevaFecha": "2026-10-20"
+}
+
+#Salida
+
+{
+  "adopcionId": "adopcion-201",
+  "fechaRecibimientoAnterior": "2026-10-15",
+  "nuevaFechaRecibimiento": "2026-10-20",
+  "estado": "APROBADA"
+}
+
+#Iniciar Sesion
+
+#Entrada
+
+{
+  "correo": "carlos@ejemplo.com",
+  "contrasena": "Ejemplo123"
+}
+#Salida
+
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.ejemplo",
+  "usuarioId": "usuario-301",
+  "nombre": "Carlos Pérez",
+  "correo": "carlos@ejemplo.com",
+  "rol": "ADOPTANTE"
+}
