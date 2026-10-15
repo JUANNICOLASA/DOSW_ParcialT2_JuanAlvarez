@@ -13,6 +13,7 @@
 9. [Docker](#9-docker)
 10. [CI/CD](#10-cicd)
 11. [Herramientas de modelado y diseño (evidencias)](#11-herramientas-de-modelado-y-diseño-evidencias)
+- [Implementación y evidencias](#implementación-y-evidencias)
 
 ---
 
@@ -296,11 +297,14 @@ _Captura del contenedor corriendo:_
 
 El pipeline está en `.github/workflows/ci-cd.yml` y se ejecuta con cada push a `main` y `develop`:
 
-1. **test**: compila el proyecto y ejecuta las pruebas con `mvn verify`.
-2. **docker**: construye la imagen y la publica en Docker Hub (`<usuario>/dosw-parcial-t2:latest`).
-3. **deploy**: despliega la imagen en Azure App Service.
+1. **build**: compila el proyecto.
+2. **test**: ejecuta las pruebas unitarias con `mvn verify` y publica el reporte de JaCoCo.
+3. **analysis**: realiza el análisis estático con SonarQube.
+4. **docker**: construye la imagen y la publica en Docker Hub (`<usuario>/dosw-parcial-t2`), con las etiquetas `latest` y la del commit.
+5. **deploy**: configura las variables de la App Service y despliega la imagen del commit en Azure.
+6. **verify**: comprueba que la API desplegada responde.
 
-Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `AZURE_WEBAPP_NAME`, `JWT_SECRET`.
+Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `AZURE_WEBAPP_NAME`, `JWT_SECRET`, `MONGODB_URI`.
 
 _Captura del workflow en verde:_
 
@@ -680,3 +684,69 @@ ERROR [traceId=7f3a2c91] AdopcionService.adoptar - MongoTimeoutException: Timed 
 ```
 
 Para un error de negocio (por ejemplo 409, mascota no disponible), el cliente recibe un mensaje específico como *"La mascota no está disponible para adopción"*. El log interno registra además los ids y el estado actual de la mascota.
+
+## Implementación y evidencias
+
+### Ejecución de la aplicación y de las pruebas
+
+La preparación del entorno y los comandos para ejecutar el servicio y las pruebas están en las secciones [7. Cómo ejecutar](#7-cómo-ejecutar) y [8. Pruebas](#8-pruebas). Las variables de entorno necesarias son las siguientes (sus valores no se publican en el repositorio):
+
+| Variable | Uso |
+|---|---|
+| `MONGODB_URI` | Conexión a la base de datos MongoDB. |
+| `JWT_SECRET` | Clave con la que se firman los tokens de sesión. |
+| `WEBSITES_PORT` | Puerto del contenedor en Azure App Service. |
+
+### Pruebas unitarias
+
+Las pruebas se construyeron con JUnit 5 y Mockito siguiendo la estructura Arrange, Act y Assert. Cada servicio se prueba de forma aislada: los repositorios se reemplazan por mocks, de modo que las pruebas no dependen de la base de datos ni de los controladores.
+
+| Clase de prueba | Escenarios cubiertos |
+|---|---|
+| `MascotaServiceImplTest` | Creación exitosa con estado DISPONIBLE, identificador repetido, refugio inexistente y nodo que no es de tipo REFUGIO (E03). |
+| `AdopcionServiceImplTest` | Adopción exitosa, mascota inexistente, mascota no disponible (E06), segunda solicitud (E8), fecha de recibimiento inválida (E07) e incompatibilidad con niños, otras mascotas o espacios reducidos (E04). En cada rechazo se verifica que no se guarda la solicitud y que la mascota sigue DISPONIBLE. |
+| `AplazamientoServiceImplTest` | Aplazamiento exitoso, solicitud inexistente, solicitud de otro adoptante, solicitud no aprobada, doble aplazamiento (E9) y nueva fecha fuera del rango permitido. |
+| `MascotasAdoptadasServiceImplTest` | Orden descendente por fecha, consulta como ADMIN y como ADOPTANTE, y consulta sin resultados (E11). |
+| `AutenticacionServiceTest` | Inicio de sesión exitoso, correo no registrado y contraseña incorrecta. |
+| `JwtServiceTest` y `JwtAuthenticationFilterTest` | Generación y validación del token, token vencido o con firma inválida, y peticiones sin token. |
+| `ControladoresTest` y `GlobalExceptionHandlerTest` | Respuesta de cada endpoint y traducción de los errores a los códigos HTTP del contrato. |
+| `UsuarioInicializadorTest` | Creación de los usuarios predefinidos sin duplicarlos. |
+
+En total se ejecutan 58 pruebas sin fallos.
+
+### Cobertura con JaCoCo
+
+La cobertura total es de 85 % de instrucciones y 92 % de ramas. Las clases de servicio tienen una cobertura del 100 % de líneas.
+
+![Reporte JaCoCo](docs/images/jacoco-cobertura.png)
+
+### Análisis estático con SonarQube
+
+El análisis se ejecuta en el pipeline y también puede ejecutarse en local con `mvn verify sonar:sonar`. El proyecto supera el Quality Gate con una cobertura del 98,4 % sobre el código analizado.
+
+![Reporte SonarQube](docs/images/sonarqube.png)
+
+### Pipeline y despliegue
+
+El pipeline se ejecuta con cada integración en `develop` y sigue el orden build, test, analysis, docker, deploy y verify. Cada etapa depende de la anterior, por lo que si una prueba o el análisis fallan la nueva versión no se despliega.
+
+| Recurso | Enlace |
+|---|---|
+| Aplicación en Azure | https://dosw-parcialt2-juanalvarez.azurewebsites.net |
+| Documentación Swagger | https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html |
+
+### Docker Compose (bono)
+
+El archivo `docker-compose.yml` levanta la API junto con una base de datos MongoDB local. La API espera a que MongoDB esté disponible antes de iniciar y se conecta a ella por el nombre del servicio `mongo`. La información se conserva en el volumen `mongo-data`.
+
+Para levantarlo se crea un archivo `.env` (excluido del repositorio) con la variable `JWT_SECRET` y se ejecuta:
+
+```bash
+docker compose up -d --build
+```
+
+La API queda disponible en http://localhost:8080 y su documentación en http://localhost:8080/swagger-ui/index.html. Para detenerlo se usa `docker compose down`.
+
+La configuración se verificó levantando ambos contenedores y ejecutando los cinco casos de uso desde la API: inicio de sesión, creación de una mascota, adopción, consulta de mascotas adoptadas y aplazamiento del recibimiento.
+
+![Swagger con Docker Compose](docs/images/docker-compose-swagger.png)
