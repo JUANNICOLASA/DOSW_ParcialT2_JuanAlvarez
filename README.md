@@ -7,13 +7,11 @@
 3. [Despliegue](#3-despliegue)
 4. [Estructura del proyecto](#4-estructura-del-proyecto)
 5. [Tecnologías y dependencias](#5-tecnologías-y-dependencias)
-6. [Configuración y variables de entorno](#6-configuración-y-variables-de-entorno)
+6. [Variables de entorno](#6-variables-de-entorno)
 7. [Cómo ejecutar](#7-cómo-ejecutar)
-8. [Pruebas](#8-pruebas)
-9. [Docker](#9-docker)
-10. [CI/CD](#10-cicd)
-11. [Herramientas de modelado y diseño (evidencias)](#11-herramientas-de-modelado-y-diseño-evidencias)
-- [Implementación y evidencias](#implementación-y-evidencias)
+8. [CI/CD](#8-cicd)
+9. [Herramientas de modelado y diseño](#9-herramientas-de-modelado-y-diseño)
+10. [Implementación y evidencias](#implementación-y-evidencias)
 
 ---
 
@@ -23,7 +21,7 @@
 |---|---|
 | Nombre completo | Juan Nicolás Álvarez Muñoz |
 | Grupo | 2 |
-| Profesor agregado al repositorio | ✔ |
+| Profesor agregado al repositorio | Sí |
 
 ## 2. Descripción del proyecto
 
@@ -54,6 +52,7 @@ DOSW_ParcialT2_JuanAlvarez/
 ├── src/
 │   ├── main/
 │   │   ├── java/edu/dosw/parcial/
+│   │   │   ├── auth/
 │   │   │   ├── controller/
 │   │   │   │   ├── dtos/
 │   │   │   │   │   ├── request/
@@ -74,38 +73,38 @@ DOSW_ParcialT2_JuanAlvarez/
 │   │   └── resources/
 │   │       └── application.yaml
 │   └── test/
-│       ├── java/edu/dosw/parcial/
-│       │   ├── controller/
-│       │   ├── core/
-│       │   └── persistence/
-│       └── resources/
+│       └── java/edu/dosw/parcial/
+│           ├── auth/
+│           ├── config/
+│           ├── controller/
+│           └── core/
 ├── .github/workflows/ci-cd.yml
 ├── Dockerfile
-├── .dockerignore
+├── docker-compose.yml
 ├── mvnw / mvnw.cmd / .mvn/
 ├── pom.xml
 ├── .gitignore
 └── README.md
 ```
 
-| Paquete / carpeta | Responsabilidad |
+| Paquete o carpeta | Responsabilidad |
 |---|---|
-| `docs/uml` | Diagramas fuente (draw.io / Lucidchart / Miro). |
-| `docs/images` | Exportes PNG/SVG y capturas usadas como evidencia en este README. |
-| `controller` | Controladores REST que exponen los endpoints de la API. |
-| `controller/dtos/request` | DTOs de entrada con sus validaciones. |
-| `controller/dtos/response` | DTOs de salida que se devuelven al cliente. |
-| `controller/mappers` | Mapper IN: RequestDTO → Dominio y Dominio → ResponseDTO. |
-| `controller/handlers` | `GlobalExceptionHandler` para el manejo centralizado de errores. |
-| `core/services` | Lógica de negocio. |
-| `core/models` | Objetos de dominio. |
-| `core/validators` | Reglas de validación del negocio. |
-| `core/utils` | Utilidades compartidas. |
-| `persistence/entities` | Clases `@Document` de MongoDB. |
-| `persistence/repositories` | Interfaces `MongoRepository`. |
-| `persistence/mappers` | Mapper OUT: Dominio ↔ Document. |
-| `config` | Configuración de seguridad (`SecurityConfig`) y Swagger (`SwaggerConfig`). |
-| `main` | Clase principal anotada con `@SpringBootApplication`. |
+| docs/uml | Archivos fuente de los diagramas. |
+| docs/images | Diagramas exportados y capturas usadas como evidencia. |
+| auth | Generación y validación de los tokens JWT. |
+| controller | Controladores REST que exponen los endpoints de la API. |
+| controller/dtos | Objetos de entrada y salida de la API con sus validaciones. |
+| controller/mappers | Mapper IN, entre los DTO y los objetos de dominio. |
+| controller/handlers | Manejo centralizado de errores. |
+| core/services | Lógica de negocio. |
+| core/models | Objetos de dominio. |
+| core/validators | Reglas de validación del negocio. |
+| core/utils | Utilidades compartidas. |
+| persistence/entities | Documentos de MongoDB. |
+| persistence/repositories | Repositorios de acceso a MongoDB. |
+| persistence/mappers | Mapper OUT, entre el dominio y los documentos. |
+| config | Configuración de seguridad, de Swagger y de los usuarios iniciales. |
+| main | Clase principal de la aplicación. |
 
 ## 5. Tecnologías y dependencias
 
@@ -113,210 +112,75 @@ DOSW_ParcialT2_JuanAlvarez/
 |---|---|---|
 | Java | 21 | Lenguaje del proyecto. |
 | Spring Boot | 3.5.16 | Framework base del servicio. |
-| Spring Web | (Spring Boot) | Construcción de la API REST. |
-| Spring Data MongoDB | (Spring Boot) | Persistencia en MongoDB. |
-| Spring Validation | (Spring Boot) | Validación de DTOs. |
-| Spring Security | (Spring Boot) | Seguridad de los endpoints. |
+| Spring Web | Spring Boot | Construcción de la API REST. |
+| Spring Data MongoDB | Spring Boot | Persistencia en MongoDB. |
+| Spring Validation | Spring Boot | Validación de los datos de entrada. |
+| Spring Security | Spring Boot | Seguridad de los endpoints. |
 | JJWT | 0.12.7 | Generación y validación de tokens JWT. |
 | springdoc-openapi | 2.8.17 | Documentación de la API con Swagger UI. |
-| Lombok | (Spring Boot) | Reducción de código repetitivo y logs con `@Slf4j`. |
-| MapStruct | 1.6.3 | Mappers entre DTOs, dominio y documentos. |
-| JUnit 5 + Mockito | (Spring Boot) | Pruebas unitarias. |
-| Jacoco | 0.8.15 | Reporte de cobertura de pruebas. |
-| SonarQube (sonar-maven-plugin) | 5.8.0.7211 | Análisis estático de calidad del código. |
-| Maven (Wrapper) | 3.9.11 | Construcción del proyecto sin instalar Maven (`mvnw`). |
-| Docker | — | Contenerización del servicio. |
-| GitHub Actions | — | Pipeline de CI/CD. |
-| Azure App Service | — | Despliegue del contenedor. |
+| Lombok | Spring Boot | Reducción de código repetitivo. |
+| MapStruct | 1.6.3 | Conversión entre DTO, dominio y documentos. |
+| JUnit 5 y Mockito | Spring Boot | Pruebas unitarias. |
+| JaCoCo | 0.8.15 | Reporte de cobertura de pruebas. |
+| SonarQube | 5.8.0.7211 | Análisis estático del código. |
+| Maven Wrapper | 3.9.11 | Construcción del proyecto sin instalar Maven. |
+| Docker y Docker Compose | - | Contenerización del servicio y de la base de datos local. |
+| GitHub Actions | - | Pipeline de CI/CD. |
+| Azure App Service | - | Despliegue del contenedor. |
 
-## 6. Configuración y variables de entorno
+## 6. Variables de entorno
 
-| Variable | Descripción | Ejemplo |
-|---|---|---|
-| `MONGODB_URI` | Cadena de conexión a MongoDB. Si no se define se usa la base local. | `mongodb://localhost:27017/dosw_parcial` |
-| `JWT_SECRET` | Secret en Base64 para firmar los JWT (mínimo 44 caracteres). | `<secret_base64>` |
-| `PORT` | Puerto del servidor (por defecto 8080). | `8080` |
-| `WEBSITES_PORT` | Puerto al que Azure enruta el tráfico del contenedor. | `8080` |
+| Variable | Descripción |
+|---|---|
+| MONGODB_URI | Cadena de conexión a MongoDB. Si no se define se usa una base local en el puerto 27017. |
+| JWT_SECRET | Clave para firmar los tokens JWT, de mínimo 32 caracteres. |
+| WEBSITES_PORT | Puerto al que Azure dirige el tráfico del contenedor (8080). |
 
-Ninguna credencial se sube al repositorio: `.env` y `*.p12` están en el `.gitignore`.
+Ninguna credencial se sube al repositorio. El archivo .env está excluido en el .gitignore.
 
 ## 7. Cómo ejecutar
 
-### 7.1 Preparar el entorno en un PC nuevo
+Se requiere JDK 21 y Docker. Para levantar la API junto con MongoDB se crea un archivo .env con la variable JWT_SECRET y se ejecuta docker compose. Las pruebas se ejecutan con el Maven Wrapper.
 
-**Herramientas necesarias**
-
-| Herramienta | Versión | Verificar con |
-|---|---|---|
-| Git | cualquiera reciente | `git --version` |
-| JDK | **21** (Temurin recomendado) | `java -version` |
-| Docker Desktop | cualquiera reciente | `docker --version` |
-| IntelliJ IDEA (opcional) | cualquiera reciente | — |
-| GitHub CLI (opcional) | cualquiera reciente | `gh --version` |
-
-> ⚠️ **Usar JDK 21.** Con versiones más nuevas del JDK (por ejemplo 27) Lombok falla al compilar con
-> `ExceptionInInitializerError: com.sun.tools.javac.tree.EndPosTable`. Si hay varios JDK instalados, `JAVA_HOME`
-> debe apuntar al 21.
-
-No hace falta instalar Maven: el proyecto incluye el Maven Wrapper (`mvnw` / `mvnw.cmd`), que descarga Maven 3.9.11 la primera vez.
-
-**1. Clonar el repositorio y configurar la identidad de Git**
-
-```bash
-git clone https://github.com/JUANNICOLASA/DOSW_ParcialT2_JuanAlvarez.git
-cd DOSW_ParcialT2_JuanAlvarez
-git checkout develop
-git config user.name "JUANNICOLASA"
-git config user.email "juan.amunoz@mail.escuelaing.edu.co"
+```
+docker compose up -d --build
+./mvnw verify
 ```
 
-**2. Definir el secret JWT para desarrollo local**
+La API queda disponible en http://localhost:8080/swagger-ui/index.html y el reporte de cobertura en target/site/jacoco/index.html.
 
-En local se puede usar cualquier valor Base64 de mínimo 44 caracteres (no tiene que ser el de Azure).
-
-macOS / Linux:
-
-```bash
-export JWT_SECRET=$(openssl rand -base64 48)
-```
-
-Windows (PowerShell):
-
-```powershell
-$bytes = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
-```
-
-La variable solo dura mientras la terminal esté abierta.
-
-**3. Levantar MongoDB local**
-
-Con Docker Desktop abierto:
-
-```bash
-docker run -d -p 27017:27017 --name mongo-parcial mongo:7
-```
-
-Si el contenedor ya existe (por ejemplo, después de reiniciar el PC): `docker start mongo-parcial`.
-
-**4. Compilar y ejecutar las pruebas**
-
-```bash
-./mvnw clean verify          # macOS / Linux
-.\mvnw.cmd clean verify      # Windows
-```
-
-Debe terminar en `BUILD SUCCESS`. El reporte de Jacoco queda en `target/site/jacoco/index.html`.
-
-**5. Ejecutar el servicio**
-
-```bash
-./mvnw spring-boot:run       # macOS / Linux
-.\mvnw.cmd spring-boot:run   # Windows
-```
-
-Verificar en el navegador:
-
-- http://localhost:8080/api/v1/health → `{"status":"UP","service":"DOSW-ParcialT2"}`
-- http://localhost:8080/swagger-ui/index.html → carga Swagger
-
-**6. Abrir el proyecto en IntelliJ IDEA**
-
-1. *File → Open* y seleccionar el `pom.xml` → *Open as Project*.
-2. *File → Project Structure → Project → SDK*: seleccionar **21** (si no aparece, *Add SDK → Download JDK → Temurin 21*).
-3. *Settings → Build, Execution, Deployment → Compiler → Annotation Processors*: marcar **Enable annotation processing** (Lombok y MapStruct).
-4. Instalar el plugin de **Lombok** si IntelliJ lo sugiere.
-5. Abrir `src/main/java/edu/dosw/parcial/main/ParcialApplication.java`, ejecutarla una vez y luego en *Run → Edit Configurations → Environment variables* agregar `JWT_SECRET=<valor_base64>`.
-
-**7. Verificar el despliegue y el pipeline**
-
-No se necesita configurar nada de Azure ni de Docker Hub en el PC nuevo: los secrets ya están en GitHub y la configuración en el App Service.
-
-1. Hacer un cambio, commit y push a `develop`:
-   ```bash
-   git add .
-   git commit -m "mensaje"
-   git push origin develop
-   ```
-2. Revisar en GitHub → *Actions* que el workflow **CI/CD — DOSW Parcial T2** quede en verde (test → docker → deploy).
-3. Abrir https://dosw-parcialt2-juanalvarez.azurewebsites.net/api/v1/health y https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html. La primera petición puede tardar 30–60 s si el servicio estaba inactivo (plan gratuito).
-
-### 7.2 Comandos rápidos
-
-**Mongo local con Docker**
-
-```bash
-docker run -d -p 27017:27017 --name mongo-parcial mongo:7
-```
-
-**Local con Maven**
-
-```bash
-export JWT_SECRET=$(openssl rand -base64 48)
-./mvnw spring-boot:run
-```
-
-**Local con Docker**
-
-```bash
-docker build -t dosw-parcial:local .
-docker run -p 8080:8080 -e JWT_SECRET=<su_secret_base64> dosw-parcial:local
-```
-
-Luego abrir http://localhost:8080/api/v1/health y http://localhost:8080/swagger-ui/index.html.
-
-## 8. Pruebas
-
-```bash
-./mvnw test        # macOS / Linux
-.\mvnw.cmd test    # Windows
-```
-
-El reporte de cobertura de Jacoco queda en `target/site/jacoco/index.html`.
-
-_Captura del resultado en verde:_
+Resultado de las pruebas y del reporte de cobertura de los prerrequisitos:
 
 ![Pruebas](docs/images/pruebas.png)
 
-_Captura del reporte Jacoco:_
-
 ![Jacoco](docs/images/jacoco.jpg)
 
-## 9. Docker
-
-```bash
-docker build -t dosw-parcial:local .
-docker run -p 8080:8080 -e JWT_SECRET=<su_secret_base64> dosw-parcial:local
-```
-
-_Captura del contenedor corriendo:_
+Contenedor en ejecución:
 
 ![Docker](docs/images/docker.png)
 
-## 10. CI/CD
+## 8. CI/CD
 
-El pipeline está en `.github/workflows/ci-cd.yml` y se ejecuta con cada push a `main` y `develop`:
+El pipeline está en .github/workflows/ci-cd.yml y se ejecuta con cada push a main y develop. Sus etapas son:
 
-1. **build**: compila el proyecto.
-2. **test**: ejecuta las pruebas unitarias con `mvn verify` y publica el reporte de JaCoCo.
-3. **analysis**: realiza el análisis estático con SonarQube.
-4. **docker**: construye la imagen y la publica en Docker Hub (`<usuario>/dosw-parcial-t2`), con las etiquetas `latest` y la del commit.
-5. **deploy**: configura las variables de la App Service y despliega la imagen del commit en Azure.
-6. **verify**: comprueba que la API desplegada responde.
+1. build: compila el proyecto.
+2. test: ejecuta las pruebas unitarias y publica el reporte de JaCoCo.
+3. analysis: realiza el análisis estático con SonarQube.
+4. docker: construye la imagen y la publica en Docker Hub con las etiquetas latest y la del commit.
+5. deploy: configura las variables de la App Service y despliega la imagen del commit en Azure.
+6. verify: comprueba que la API desplegada responde.
 
-Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `AZURE_WEBAPP_NAME`, `JWT_SECRET`, `MONGODB_URI`.
-
-_Captura del workflow en verde:_
+Secrets usados: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN, AZURE_CREDENTIALS, AZURE_WEBAPP_NAME, JWT_SECRET y MONGODB_URI.
 
 ![CI/CD](docs/images/cicd.jpg)
 
-## 11. Herramientas de modelado y diseño (evidencias)
+## 9. Herramientas de modelado y diseño
 
-**Herramienta de modelado: Draw.io** (almacenamiento en Google Drive)
+Herramienta de modelado: Draw.io, con almacenamiento en Google Drive.
 
 ![Draw.io](docs/images/drawio.jpg)
 
-**Herramienta de diseño: Figma**
+Herramienta de diseño: Figma.
 
 ![Figma](docs/images/figma.jpg)
 
@@ -689,13 +553,7 @@ Para un error de negocio (por ejemplo 409, mascota no disponible), el cliente re
 
 ### Ejecución de la aplicación y de las pruebas
 
-La preparación del entorno y los comandos para ejecutar el servicio y las pruebas están en las secciones [7. Cómo ejecutar](#7-cómo-ejecutar) y [8. Pruebas](#8-pruebas). Las variables de entorno necesarias son las siguientes (sus valores no se publican en el repositorio):
-
-| Variable | Uso |
-|---|---|
-| `MONGODB_URI` | Conexión a la base de datos MongoDB. |
-| `JWT_SECRET` | Clave con la que se firman los tokens de sesión. |
-| `WEBSITES_PORT` | Puerto del contenedor en Azure App Service. |
+Las instrucciones para ejecutar la aplicación y las pruebas están en la sección [7. Cómo ejecutar](#7-cómo-ejecutar). Las variables de entorno necesarias son MONGODB_URI, JWT_SECRET y WEBSITES_PORT, descritas en la sección [6. Variables de entorno](#6-variables-de-entorno). Sus valores no se publican en el repositorio.
 
 ### Pruebas unitarias
 
@@ -703,14 +561,14 @@ Las pruebas se construyeron con JUnit 5 y Mockito siguiendo la estructura Arrang
 
 | Clase de prueba | Escenarios cubiertos |
 |---|---|
-| `MascotaServiceImplTest` | Creación exitosa con estado DISPONIBLE, identificador repetido, refugio inexistente y nodo que no es de tipo REFUGIO (E03). |
-| `AdopcionServiceImplTest` | Adopción exitosa, mascota inexistente, mascota no disponible (E06), segunda solicitud (E8), fecha de recibimiento inválida (E07) e incompatibilidad con niños, otras mascotas o espacios reducidos (E04). En cada rechazo se verifica que no se guarda la solicitud y que la mascota sigue DISPONIBLE. |
-| `AplazamientoServiceImplTest` | Aplazamiento exitoso, solicitud inexistente, solicitud de otro adoptante, solicitud no aprobada, doble aplazamiento (E9) y nueva fecha fuera del rango permitido. |
-| `MascotasAdoptadasServiceImplTest` | Orden descendente por fecha, consulta como ADMIN y como ADOPTANTE, y consulta sin resultados (E11). |
-| `AutenticacionServiceTest` | Inicio de sesión exitoso, correo no registrado y contraseña incorrecta. |
-| `JwtServiceTest` y `JwtAuthenticationFilterTest` | Generación y validación del token, token vencido o con firma inválida, y peticiones sin token. |
-| `ControladoresTest` y `GlobalExceptionHandlerTest` | Respuesta de cada endpoint y traducción de los errores a los códigos HTTP del contrato. |
-| `UsuarioInicializadorTest` | Creación de los usuarios predefinidos sin duplicarlos. |
+| MascotaServiceImplTest | Creación exitosa con estado DISPONIBLE, identificador repetido, refugio inexistente y nodo que no es de tipo REFUGIO (E03). |
+| AdopcionServiceImplTest | Adopción exitosa, mascota inexistente, mascota no disponible (E06), segunda solicitud (E8), fecha de recibimiento inválida (E07) e incompatibilidad con niños, otras mascotas o espacios reducidos (E04). En cada rechazo se verifica que no se guarda la solicitud y que la mascota sigue DISPONIBLE. |
+| AplazamientoServiceImplTest | Aplazamiento exitoso, solicitud inexistente, solicitud de otro adoptante, solicitud no aprobada, doble aplazamiento (E9) y nueva fecha fuera del rango permitido. |
+| MascotasAdoptadasServiceImplTest | Orden descendente por fecha, consulta como ADMIN y como ADOPTANTE, y consulta sin resultados (E11). |
+| AutenticacionServiceTest | Inicio de sesión exitoso, correo no registrado y contraseña incorrecta. |
+| JwtServiceTest y JwtAuthenticationFilterTest | Generación y validación del token, token vencido o con firma inválida, y peticiones sin token. |
+| ControladoresTest y GlobalExceptionHandlerTest | Respuesta de cada endpoint y traducción de los errores a los códigos HTTP del contrato. |
+| UsuarioInicializadorTest | Creación de los usuarios predefinidos sin duplicarlos. |
 
 En total se ejecutan 58 pruebas sin fallos.
 
@@ -722,13 +580,13 @@ La cobertura total es de 85 % de instrucciones y 92 % de ramas. Las clases de se
 
 ### Análisis estático con SonarQube
 
-El análisis se ejecuta en el pipeline y también puede ejecutarse en local con `mvn verify sonar:sonar`. El proyecto supera el Quality Gate con una cobertura del 98,4 % sobre el código analizado.
+El análisis se ejecuta en el pipeline. El proyecto supera el Quality Gate con una cobertura del 98,4 % sobre el código analizado.
 
 ![Reporte SonarQube](docs/images/sonarqube.png)
 
 ### Pipeline y despliegue
 
-El pipeline se ejecuta con cada integración en `develop` y sigue el orden build, test, analysis, docker, deploy y verify. Cada etapa depende de la anterior, por lo que si una prueba o el análisis fallan la nueva versión no se despliega.
+El pipeline se ejecuta con cada integración en develop y sigue el orden build, test, analysis, docker, deploy y verify. Cada etapa depende de la anterior, por lo que si una prueba o el análisis fallan la nueva versión no se despliega.
 
 | Recurso | Enlace |
 |---|---|
@@ -737,15 +595,7 @@ El pipeline se ejecuta con cada integración en `develop` y sigue el orden build
 
 ### Docker Compose (bono)
 
-El archivo `docker-compose.yml` levanta la API junto con una base de datos MongoDB local. La API espera a que MongoDB esté disponible antes de iniciar y se conecta a ella por el nombre del servicio `mongo`. La información se conserva en el volumen `mongo-data`.
-
-Para levantarlo se crea un archivo `.env` (excluido del repositorio) con la variable `JWT_SECRET` y se ejecuta:
-
-```bash
-docker compose up -d --build
-```
-
-La API queda disponible en http://localhost:8080 y su documentación en http://localhost:8080/swagger-ui/index.html. Para detenerlo se usa `docker compose down`.
+El archivo docker-compose.yml levanta la API junto con una base de datos MongoDB local. La API espera a que MongoDB esté disponible antes de iniciar y se conecta a ella por el nombre del servicio mongo. La información se conserva en el volumen mongo-data. La forma de levantarlo está en la sección [7. Cómo ejecutar](#7-cómo-ejecutar).
 
 La configuración se verificó levantando ambos contenedores y ejecutando los cinco casos de uso desde la API: inicio de sesión, creación de una mascota, adopción, consulta de mascotas adoptadas y aplazamiento del recibimiento.
 
