@@ -590,8 +590,17 @@ El pipeline se ejecuta con cada integración en develop y sigue el orden build, 
 
 | Recurso | Enlace |
 |---|---|
+| Ejecución exitosa del pipeline | https://github.com/JUANNICOLASA/DOSW_ParcialT2_JuanAlvarez/actions/runs/38667772164 |
 | Aplicación en Azure | https://dosw-parcialt2-juanalvarez.azurewebsites.net |
 | Documentación Swagger | https://dosw-parcialt2-juanalvarez.azurewebsites.net/swagger-ui/index.html |
+
+Ejecución del pipeline con todas sus etapas completadas:
+
+![Pipeline exitoso](docs/images/pipeline-exitoso.png)
+
+API desplegada en Azure App Service:
+
+![Swagger en Azure](docs/images/azure-swagger.png)
 
 ### Docker Compose (bono)
 
