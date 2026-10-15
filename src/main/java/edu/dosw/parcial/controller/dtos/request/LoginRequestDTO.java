@@ -12,9 +12,6 @@ public class LoginRequestDTO {
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
-    public LoginRequestDTO() {
-    }
-
     public String getCorreo() {
         return correo;
     }

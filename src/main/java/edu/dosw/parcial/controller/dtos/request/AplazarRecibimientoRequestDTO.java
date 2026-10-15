@@ -9,9 +9,6 @@ public class AplazarRecibimientoRequestDTO {
     @NotNull(message = "La nueva fecha es obligatoria")
     private LocalDate nuevaFecha;
 
-    public AplazarRecibimientoRequestDTO() {
-    }
-
     public LocalDate getNuevaFecha() {
         return nuevaFecha;
     }

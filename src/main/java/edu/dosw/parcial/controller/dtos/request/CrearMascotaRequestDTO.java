@@ -35,9 +35,6 @@ public class CrearMascotaRequestDTO {
     @NotNull(message = "La compatibilidad es obligatoria")
     private Compatibilidad compatibilidad;
 
-    public CrearMascotaRequestDTO() {
-    }
-
     public String getId() {
         return id;
     }

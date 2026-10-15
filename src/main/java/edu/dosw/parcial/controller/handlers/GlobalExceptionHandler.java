@@ -1,6 +1,5 @@
 package edu.dosw.parcial.controller.handlers;
 
-import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,6 +17,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String MENSAJE = "mensaje";
+
     private static final Logger logger =
             LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler {
         logger.warn("Solicitud rechazada por datos inválidos: {}", errores);
 
         Map<String, Object> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje", "Los datos enviados no son válidos");
+        respuesta.put(MENSAJE, "Los datos enviados no son válidos");
         respuesta.put("errores", errores);
 
         return ResponseEntity.badRequest().body(respuesta);
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
         logger.warn("Solicitud rechazada: formato JSON o enumerado inválido");
 
         Map<String, String> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje",
+        respuesta.put(MENSAJE,
                 "El JSON contiene un valor inválido o tiene un formato incorrecto");
 
         return ResponseEntity.badRequest().body(respuesta);
@@ -68,7 +69,7 @@ public class GlobalExceptionHandler {
         }
 
         Map<String, String> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje", exception.getMessage());
+        respuesta.put(MENSAJE, exception.getMessage());
 
         return ResponseEntity.status(estado).body(respuesta);
     }
@@ -78,7 +79,7 @@ public class GlobalExceptionHandler {
             ResponseStatusException exception) {
 
         Map<String, String> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje", exception.getReason() == null
+        respuesta.put(MENSAJE, exception.getReason() == null
                 ? "No fue posible completar la solicitud"
                 : exception.getReason());
 
@@ -92,7 +93,7 @@ public class GlobalExceptionHandler {
         logger.error("Error inesperado al procesar la solicitud", exception);
 
         Map<String, String> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje", "Ocurrió un error interno del servidor");
+        respuesta.put(MENSAJE, "Ocurrió un error interno del servidor");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(respuesta);

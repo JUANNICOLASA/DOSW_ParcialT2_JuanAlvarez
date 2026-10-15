@@ -17,9 +17,6 @@ public class SolicitudAdopcionDocument {
     private EstadoSolicitud estado;
     private int aplazamientos;
 
-    public SolicitudAdopcionDocument() {
-    }
-
     public String getId() {
         return id;
     }

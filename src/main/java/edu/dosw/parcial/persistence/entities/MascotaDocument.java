@@ -20,9 +20,6 @@ public class MascotaDocument {
     private Compatibilidad compatibilidad;
     private EstadoMascota estado;
 
-    public MascotaDocument() {
-    }
-
     public String getId() {
         return id;
     }

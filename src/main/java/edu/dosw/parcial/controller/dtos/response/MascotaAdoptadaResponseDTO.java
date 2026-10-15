@@ -13,9 +13,6 @@ public class MascotaAdoptadaResponseDTO {
     private String refugioId;
     private LocalDate fechaRecibimiento;
 
-    public MascotaAdoptadaResponseDTO() {
-    }
-
     public String getSolicitudId() {
         return solicitudId;
     }

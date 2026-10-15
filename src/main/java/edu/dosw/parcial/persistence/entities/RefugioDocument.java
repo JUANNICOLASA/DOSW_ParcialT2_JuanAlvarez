@@ -12,9 +12,6 @@ public class RefugioDocument {
     private String nombre;
     private TipoRefugio tipo;
 
-    public RefugioDocument() {
-    }
-
     public String getId() {
         return id;
     }

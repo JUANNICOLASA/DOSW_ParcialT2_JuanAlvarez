@@ -22,9 +22,6 @@ public class AdoptarMascotaRequestDTO {
     @NotNull(message = "Debe indicar si tiene espacios reducidos")
     private Boolean tieneEspaciosReducidos;
 
-    public AdoptarMascotaRequestDTO() {
-    }
-
     public String getMascotaId() {
         return mascotaId;
     }
